@@ -1,0 +1,9 @@
+This is a git subtree split from the SCSI2SD project
+(http://www.codesrc.com/mediawiki/index.php?title=SCSI2SD)
+by Michael McMaster. He integrated the code Cypress provides to talk
+to their USB HID bootloaders in the PSoC3/5LP (cybootloaderutils) with the
+awesome HIDAPI project (hey Alan!). HIDAPI is included as a submodule that
+will have to be initialized as follows:
+
+git submodule init && git submodule update
+
