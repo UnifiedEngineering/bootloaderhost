@@ -8,10 +8,14 @@
 #include "cybtldr_command.h"
 #include "cybtldr_api.h"
 
-/* The highest number of flash array for any device */
-#define MAX_FLASH_ARRAYS    4
+/* The highest number of memory arrays for any device. This includes flash and EEPROM arrays */
+#define MAX_DEV_ARRAYS    0x80
 /* The default value if a flash array has not yet received data */
 #define NO_FLASH_ARRAY_DATA 0
+/* The maximum number of flash arrays */
+#define MAX_FLASH_ARRAYS 0x40
+/* The minimum array id for EEPROM arrays. */
+#define MIN_EEPROM_ARRAY 0x40
 
 unsigned long g_validRows[MAX_FLASH_ARRAYS];
 static CyBtldr_CommunicationsData* g_comm;
@@ -75,7 +79,8 @@ int CyBtldr_ValidateRow(unsigned char arrayId, unsigned short rowNum)
 }
 
 
-int CyBtldr_StartBootloadOperation(CyBtldr_CommunicationsData* comm, unsigned long expSiId, unsigned char expSiRev, unsigned long* blVer)
+int CyBtldr_StartBootloadOperation(CyBtldr_CommunicationsData* comm, unsigned long expSiId,
+            unsigned char expSiRev, unsigned long* blVer, const unsigned char* securityKeyBuf)
 {
     const unsigned long SUPPORTED_BOOTLOADER = 0x010000;
     const unsigned long BOOTLOADER_VERSION_MASK = 0xFF0000;
@@ -98,12 +103,13 @@ int CyBtldr_StartBootloadOperation(CyBtldr_CommunicationsData* comm, unsigned lo
         err |= CYRET_ERR_COMM_MASK;
 
     if (CYRET_SUCCESS == err)
-        err = CyBtldr_CreateEnterBootLoaderCmd(inBuf, &inSize, &outSize);
+        err = CyBtldr_CreateEnterBootLoaderCmd(inBuf, &inSize, &outSize, securityKeyBuf);
     if (CYRET_SUCCESS == err)
         err = CyBtldr_TransferData(inBuf, inSize, outBuf, outSize);
     if (CYRET_SUCCESS == err)
         err = CyBtldr_ParseEnterBootLoaderCmdResult(outBuf, outSize, &siliconId, &siliconRev, blVer, &status);
-
+    else if (CyBtldr_TryParseParketStatus(outBuf, outSize, &status) == CYRET_SUCCESS)
+        err = status | CYRET_ERR_BTLDR_MASK; //if the response we get back is a valid packet overide the err with the response's status
 
     if (CYRET_SUCCESS == err)
     {
@@ -168,12 +174,11 @@ int CyBtldr_SetApplicationStatus(unsigned char appID)
 
 int CyBtldr_EndBootloadOperation(void)
 {
-    const unsigned char RESET = 0x00;
     unsigned long inSize;
     unsigned long outSize;
     unsigned char inBuf[MAX_COMMAND_SIZE];
 
-    int err = CyBtldr_CreateExitBootLoaderCmd(RESET, inBuf, &inSize, &outSize);
+    int err = CyBtldr_CreateExitBootLoaderCmd(inBuf, &inSize, &outSize);
     if (CYRET_SUCCESS == err)
     {
         err = g_comm->WriteData(inBuf, inSize);
@@ -200,8 +205,10 @@ int CyBtldr_ProgramRow(unsigned char arrayID, unsigned short rowNum, unsigned ch
     unsigned long offset = 0;
     unsigned short subBufSize;
     unsigned char status = CYRET_SUCCESS;
-
-    int err = CyBtldr_ValidateRow(arrayID, rowNum);
+    int err = CYRET_SUCCESS;
+    
+    if (arrayID < MAX_FLASH_ARRAYS)
+        err = CyBtldr_ValidateRow(arrayID, rowNum);
 
     //Break row into pieces to ensure we don't send too much for the transfer protocol
     while ((CYRET_SUCCESS == err) && ((size - offset + TRANSFER_HEADER_SIZE) > g_comm->MaxTransferSize))
@@ -242,8 +249,10 @@ int CyBtldr_EraseRow(unsigned char arrayID, unsigned short rowNum)
     unsigned long inSize = 0;
     unsigned long outSize = 0;
     unsigned char status = CYRET_SUCCESS;
-
-    int err = CyBtldr_ValidateRow(arrayID, rowNum);
+    int err = CYRET_SUCCESS;
+    
+    if (arrayID < MAX_FLASH_ARRAYS)
+        err = CyBtldr_ValidateRow(arrayID, rowNum);
     if (CYRET_SUCCESS == err)
         err = CyBtldr_CreateEraseRowCmd(arrayID, rowNum, inBuf, &inSize, &outSize);
     if (CYRET_SUCCESS == err)
@@ -264,8 +273,10 @@ int CyBtldr_VerifyRow(unsigned char arrayID, unsigned short rowNum, unsigned cha
     unsigned long outSize = 0;
     unsigned char rowChecksum = 0;
     unsigned char status = CYRET_SUCCESS;
-
-    int err = CyBtldr_ValidateRow(arrayID, rowNum);
+    int err = CYRET_SUCCESS;
+    
+    if (arrayID < MAX_FLASH_ARRAYS)
+        err = CyBtldr_ValidateRow(arrayID, rowNum);
     if (CYRET_SUCCESS == err)
         err = CyBtldr_CreateVerifyRowCmd(arrayID, rowNum, inBuf, &inSize, &outSize);
     if (CYRET_SUCCESS == err)

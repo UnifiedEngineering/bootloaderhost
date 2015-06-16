@@ -35,10 +35,11 @@ typedef void CyBtldr_ProgressUpdate(unsigned char arrayId, unsigned short rowNum
 *   
 *
 * Parameters:
-*   action - The action to execute
-*   file   – The full canonical path to the *.cyacd file to open
-*   comm   – Communication struct used for communicating with the target device
-*   update - Optional function pointer to use to notify of progress updates
+*   action      - The action to execute
+*   file        – The full canonical path to the *.cyacd file to open
+*   securityKey - The 6 byte or null security key used to authenticate with bootloader component
+*   comm        – Communication struct used for communicating with the target device
+*   update      - Optional function pointer to use to notify of progress updates
 *
 * Returns:
 *   CYRET_SUCCESS	    - The device was programmed successfully
@@ -54,8 +55,8 @@ typedef void CyBtldr_ProgressUpdate(unsigned char arrayId, unsigned short rowNum
 *   CYRET_ABORT		    - The operation was aborted
 *
 *******************************************************************************/
-int CyBtldr_RunAction(CyBtldr_Action action, const char* file, 
-                      CyBtldr_CommunicationsData* comm, CyBtldr_ProgressUpdate* update);
+int CyBtldr_RunAction(CyBtldr_Action action, const char* file, const unsigned char* securityKey,
+                    CyBtldr_CommunicationsData* comm, CyBtldr_ProgressUpdate* update);
 
 /*******************************************************************************
 * Function Name: CyBtldr_Program
@@ -65,9 +66,10 @@ int CyBtldr_RunAction(CyBtldr_Action action, const char* file,
 *   the contents of the provided *.cyacd file.
 *
 * Parameters:
-*   file   – The full canonical path to the *.cyacd file to open
-*   comm   – Communication struct used for communicating with the target device
-*   update - Optional function pointer to use to notify of progress updates
+*   file        – The full canonical path to the *.cyacd file to open
+*   securityKey - The 6 byte or null security key used to authenticate with bootloader component
+*   comm        – Communication struct used for communicating with the target device
+*   update      - Optional function pointer to use to notify of progress updates
 *
 * Returns:
 *   CYRET_SUCCESS	    - The device was programmed successfully
@@ -82,7 +84,7 @@ int CyBtldr_RunAction(CyBtldr_Action action, const char* file,
 *   CYRET_ABORT		    - The operation was aborted
 *
 *******************************************************************************/
-EXTERN int CyBtldr_Program(const char* file, CyBtldr_CommunicationsData* comm, CyBtldr_ProgressUpdate* update);
+EXTERN int CyBtldr_Program(const char* file, const unsigned char* securityKey, CyBtldr_CommunicationsData* comm, CyBtldr_ProgressUpdate* update);
 
 /*******************************************************************************
 * Function Name: CyBtldr_Erase
@@ -93,9 +95,10 @@ EXTERN int CyBtldr_Program(const char* file, CyBtldr_CommunicationsData* comm, C
 *   
 *
 * Parameters:
-*   file   – The full canonical path to the *.cyacd file to open
-*   comm   – Communication struct used for communicating with the target device
-*   update - Optional function pointer to use to notify of progress updates
+*   file        – The full canonical path to the *.cyacd file to open
+*   securityKey - The 6 byte or null security key used to authenticate with bootloader component
+*   comm        – Communication struct used for communicating with the target device
+*   update      - Optional function pointer to use to notify of progress updates
 *
 * Returns:
 *   CYRET_SUCCESS	    - The device was erased successfully
@@ -110,7 +113,7 @@ EXTERN int CyBtldr_Program(const char* file, CyBtldr_CommunicationsData* comm, C
 *   CYRET_ABORT		    - The operation was aborted
 *
 *******************************************************************************/
-EXTERN int CyBtldr_Erase(const char* file, CyBtldr_CommunicationsData* comm, CyBtldr_ProgressUpdate* update);
+EXTERN int CyBtldr_Erase(const char* file, const unsigned char* securityKey, CyBtldr_CommunicationsData* comm, CyBtldr_ProgressUpdate* update);
 
 /*******************************************************************************
 * Function Name: CyBtldr_Verify
@@ -118,11 +121,18 @@ EXTERN int CyBtldr_Erase(const char* file, CyBtldr_CommunicationsData* comm, CyB
 * Summary:
 *   This function verifies the contents of bootloadable portion of the PSoC’s 
 *   flash with the contents of the provided *.cyacd file.
+* Note:
+*   This function will fail if the bootloader/bootloadable projects modify any
+*   flash memory contained in the cyacd file. An example of such feature would
+*   be the Bootloader's "fast bootloadable application verification" feature,
+*   which modifies a byte of the metadata to flag that verification has already
+*   occurred.
 *
 * Parameters:
-*   file   – The full canonical path to the *.cyacd file to open
-*   comm   – Communication struct used for communicating with the target device
-*   update - Optional function pointer to use to notify of progress updates
+*   file        – The full canonical path to the *.cyacd file to open
+*   securityKey - The 6 byte or null security key used to authenticate with bootloader component
+*   comm        – Communication struct used for communicating with the target device
+*   update      - Optional function pointer to use to notify of progress updates
 *
 * Returns:
 *   CYRET_SUCCESS	    - The device’s flash image was verified successfully
@@ -138,7 +148,7 @@ EXTERN int CyBtldr_Erase(const char* file, CyBtldr_CommunicationsData* comm, CyB
 *   CYRET_ABORT		    - The operation was aborted
 *
 *******************************************************************************/
-EXTERN int CyBtldr_Verify(const char* file, CyBtldr_CommunicationsData* comm, CyBtldr_ProgressUpdate* update);
+EXTERN int CyBtldr_Verify(const char* file, const unsigned char* securityKey, CyBtldr_CommunicationsData* comm, CyBtldr_ProgressUpdate* update);
 
 /*******************************************************************************
 * Function Name: CyBtldr_Abort

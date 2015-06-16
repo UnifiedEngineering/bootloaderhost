@@ -81,10 +81,11 @@ int CyBtldr_ValidateRow(unsigned char arrayId, unsigned short rowNum);
 *   complete.
 *
 * Parameters:
-*   comm     – Communication struct used for communicating with the target device
-*   expSiId  - The Silicon ID of the device we expect to communicate with
-*   expSiRev - The Silicon Rev of the device we expect to communicate with
-*   blVer    - The Bootloader version that is running on the device
+*   comm              – Communication struct used for communicating with the target device
+*   expSiId           - The Silicon ID of the device we expect to communicate with
+*   expSiRev          - The Silicon Rev of the device we expect to communicate with
+*   blVer             - The Bootloader version that is running on the device
+*   securitykeyBuf    - The 6 byte or null bootloader security key
 *
 * Returns:
 *   CYRET_SUCCESS     - The start request was sent successfully
@@ -94,7 +95,8 @@ int CyBtldr_ValidateRow(unsigned char arrayId, unsigned short rowNum);
 *   CYRET_ERR_COMM    - There was a communication error talking to the device
 *
 *******************************************************************************/
-EXTERN int CyBtldr_StartBootloadOperation(CyBtldr_CommunicationsData* comm, unsigned long expSiId, unsigned char expSiRev, unsigned long* blVer);
+EXTERN int CyBtldr_StartBootloadOperation(CyBtldr_CommunicationsData* comm, unsigned long expSiId,
+            unsigned char expSiRev, unsigned long* blVer, const unsigned char* securityKeyBuf);
 
 /*******************************************************************************
 * Function Name: CyBtldr_EndBootloadOperation

@@ -125,16 +125,17 @@ int CyBtldr_ParseDefaultCmdResult(unsigned char* cmdBuf, unsigned long cmdSize, 
 *       other command.
 *
 * Parameters:
-*   protect - The flash protection settings.
-*   cmdBuf  - The preallocated buffer to store command data in.
-*   cmdSize - The number of bytes in the command.
-*   resSize - The number of bytes expected in the bootloader's response packet.
+*   protect         - The flash protection settings.
+*   cmdBuf          - The preallocated buffer to store command data in.
+*   cmdSize         - The number of bytes in the command.
+*   resSize         - The number of bytes expected in the bootloader's response packet.
+*   securityKeyBuff - The 6 byte or null bootloader security key
 *
 * Returns:
 *   CYRET_SUCCESS  - The command was constructed successfully
 *
 *******************************************************************************/
-EXTERN int CyBtldr_CreateEnterBootLoaderCmd(unsigned char* cmdBuf, unsigned long* cmdSize, unsigned long* resSize);
+EXTERN int CyBtldr_CreateEnterBootLoaderCmd(unsigned char* cmdBuf, unsigned long* cmdSize, unsigned long* resSize, const unsigned char* securityKeyBuff);
 
 /*******************************************************************************
 * Function Name: CyBtldr_ParseEnterBootLoaderCmdResult
@@ -168,7 +169,6 @@ EXTERN int CyBtldr_ParseEnterBootLoaderCmdResult(unsigned char* cmdBuf, unsigned
 *   application.
 *
 * Parameters:
-*   resetType - The type of reset to perform (0 = Reset, 1 = Direct Call).
 *   cmdBuf    - The preallocated buffer to store command data in.
 *   cmdSize   - The number of bytes in the command.
 *   resSize   - The number of bytes expected in the bootloader's response packet.
@@ -177,7 +177,7 @@ EXTERN int CyBtldr_ParseEnterBootLoaderCmdResult(unsigned char* cmdBuf, unsigned
 *   CYRET_SUCCESS  - The command was constructed successfully
 *
 *******************************************************************************/
-EXTERN int CyBtldr_CreateExitBootLoaderCmd(unsigned char resetType, unsigned char* cmdBuf, unsigned long* cmdSize, unsigned long* resSize);
+EXTERN int CyBtldr_CreateExitBootLoaderCmd(unsigned char* cmdBuf, unsigned long* cmdSize, unsigned long* resSize);
 
 /*******************************************************************************
 * Function Name: CyBtldr_CreateProgramRowCmd
@@ -517,4 +517,21 @@ EXTERN int CyBtldr_CreateSetActiveAppCmd(unsigned char appId, unsigned char* cmd
 *******************************************************************************/
 EXTERN int CyBtldr_ParseSetActiveAppCmdResult(unsigned char* cmdBuf, unsigned long cmdSize, unsigned char* status);
 
+/*******************************************************************************
+* Function Name: CyBtldr_TryParseParketStatus
+********************************************************************************
+* Summary:
+*   Parses the output packet data
+*
+* Parameters:
+*   packet      - The preallocated buffer to store command data in.
+*   packetSize  - The number of bytes in the command.
+*   status      - The status code returned by the bootloader.
+*
+* Returns:
+*   CYRET_SUCCESS           - The packet is a valid packet
+*   CYBTLDR_STAT_ERR_UNK    - The packet is not a valid packet
+*
+*******************************************************************************/
+int CyBtldr_TryParseParketStatus(unsigned char* packet, int packetSize, unsigned char* status);
 #endif

@@ -13,7 +13,7 @@
 
 unsigned char g_abort;
 
-int CyBtldr_RunAction(CyBtldr_Action action, const char* file, CyBtldr_CommunicationsData* comm, CyBtldr_ProgressUpdate* update)
+int CyBtldr_RunAction(CyBtldr_Action action, const char* file, const unsigned char* securityKey, CyBtldr_CommunicationsData* comm, CyBtldr_ProgressUpdate* update)
 {
     const unsigned long BL_VER_SUPPORT_VERIFY = 0x010214; /* Support for full flash verify added in v2.20 of cy_boot */
     const unsigned char INVALID_APP = 0xFF;
@@ -48,7 +48,7 @@ int CyBtldr_RunAction(CyBtldr_Action action, const char* file, CyBtldr_Communica
         if (CYRET_SUCCESS == err)
         {
             CyBtldr_SetCheckSumType(chksumtype);
-            err = CyBtldr_StartBootloadOperation(comm, siliconId, siliconRev, &blVer);
+            err = CyBtldr_StartBootloadOperation(comm, siliconId, siliconRev, &blVer, securityKey);
         }
 
         app = strrchr(file, '_');
@@ -155,19 +155,19 @@ int CyBtldr_RunAction(CyBtldr_Action action, const char* file, CyBtldr_Communica
     return err;
 }
 
-int CyBtldr_Program(const char* file, CyBtldr_CommunicationsData* comm, CyBtldr_ProgressUpdate* update)
+int CyBtldr_Program(const char* file, const unsigned char* securityKey, CyBtldr_CommunicationsData* comm, CyBtldr_ProgressUpdate* update)
 {
-    return CyBtldr_RunAction(PROGRAM, file, comm, update);
+    return CyBtldr_RunAction(PROGRAM, file, securityKey, comm, update);
 }
 
-int CyBtldr_Erase(const char* file, CyBtldr_CommunicationsData* comm, CyBtldr_ProgressUpdate* update)
+int CyBtldr_Erase(const char* file, const unsigned char* securityKey, CyBtldr_CommunicationsData* comm, CyBtldr_ProgressUpdate* update)
 {
-    return CyBtldr_RunAction(ERASE, file, comm, update);
+    return CyBtldr_RunAction(ERASE, file, securityKey, comm, update);
 }
 
-int CyBtldr_Verify(const char* file, CyBtldr_CommunicationsData* comm, CyBtldr_ProgressUpdate* update)
+int CyBtldr_Verify(const char* file, const unsigned char* securityKey, CyBtldr_CommunicationsData* comm, CyBtldr_ProgressUpdate* update)
 {
-    return CyBtldr_RunAction(VERIFY, file, comm, update);
+    return CyBtldr_RunAction(VERIFY, file, securityKey, comm, update);
 }
 
 int CyBtldr_Abort(void)

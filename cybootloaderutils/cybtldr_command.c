@@ -70,21 +70,30 @@ int CyBtldr_ParseDefaultCmdResult(unsigned char* cmdBuf, unsigned long cmdSize, 
     return err;
 }
 
-int CyBtldr_CreateEnterBootLoaderCmd(unsigned char* cmdBuf, unsigned long* cmdSize, unsigned long* resSize)
+int CyBtldr_CreateEnterBootLoaderCmd(unsigned char* cmdBuf, unsigned long* cmdSize, unsigned long* resSize, const unsigned char* securityKeyBuf)
 {
     const unsigned long RESULT_DATA_SIZE = 8;
+    const unsigned long BOOTLOADER_SECURITY_KEY_SIZE = 6;
+    unsigned long commandDataSize;
+    unsigned long i;
     unsigned short checksum;
 
     *resSize = BASE_CMD_SIZE + RESULT_DATA_SIZE;
-    *cmdSize = BASE_CMD_SIZE;
+    if (securityKeyBuf != NULL)
+        commandDataSize = BOOTLOADER_SECURITY_KEY_SIZE;
+    else
+        commandDataSize = 0;
+    *cmdSize = BASE_CMD_SIZE + commandDataSize;
     cmdBuf[0] = CMD_START;
     cmdBuf[1] = CMD_ENTER_BOOTLOADER;
-    cmdBuf[2] = 0;
-    cmdBuf[3] = 0;
-    checksum = CyBtldr_ComputeChecksum(cmdBuf, BASE_CMD_SIZE - 3);
-    cmdBuf[4] = (unsigned char)checksum;
-    cmdBuf[5] = (unsigned char)(checksum >> 8);
-    cmdBuf[6] = CMD_STOP;
+    cmdBuf[2] = (unsigned char)commandDataSize;
+    cmdBuf[3] = (unsigned char)(commandDataSize >> 8);
+    for (i = 0; i < commandDataSize; i++)
+        cmdBuf[i + 4] = securityKeyBuf[i];
+    checksum = CyBtldr_ComputeChecksum(cmdBuf, (*cmdSize) - 3);
+    cmdBuf[*cmdSize - 3] = (unsigned char)checksum;
+    cmdBuf[*cmdSize - 2] = (unsigned char)(checksum >> 8);
+    cmdBuf[*cmdSize - 1] = CMD_STOP;
 
     return CYRET_SUCCESS;
 }
@@ -112,23 +121,20 @@ int CyBtldr_ParseEnterBootLoaderCmdResult(unsigned char* cmdBuf, unsigned long c
     return err;
 }
 
-int CyBtldr_CreateExitBootLoaderCmd(unsigned char resetType, unsigned char* cmdBuf, unsigned long* cmdSize, unsigned long* resSize)
+int CyBtldr_CreateExitBootLoaderCmd(unsigned char* cmdBuf, unsigned long* cmdSize, unsigned long* resSize)
 {
-    const unsigned long COMMAND_DATA_SIZE = 1;
-    const unsigned int COMMAND_SIZE = BASE_CMD_SIZE + COMMAND_DATA_SIZE;
     unsigned short checksum;
 
     *resSize = BASE_CMD_SIZE;
-    *cmdSize = COMMAND_SIZE;
+    *cmdSize = BASE_CMD_SIZE;
     cmdBuf[0] = CMD_START;
     cmdBuf[1] = CMD_EXIT_BOOTLOADER;
-    cmdBuf[2] = (unsigned char)COMMAND_DATA_SIZE;
-    cmdBuf[3] = (unsigned char)(COMMAND_DATA_SIZE >> 8);
-    cmdBuf[4] = resetType;
-    checksum = CyBtldr_ComputeChecksum(cmdBuf, COMMAND_SIZE - 3);
-    cmdBuf[5] = (unsigned char)checksum;
-    cmdBuf[6] = (unsigned char)(checksum >> 8);
-    cmdBuf[7] = CMD_STOP;
+    cmdBuf[2] = 0;
+    cmdBuf[3] = 0;
+    checksum = CyBtldr_ComputeChecksum(cmdBuf, BASE_CMD_SIZE - 3);
+    cmdBuf[4] = (unsigned char)checksum;
+    cmdBuf[5] = (unsigned char)(checksum >> 8);
+    cmdBuf[6] = CMD_STOP;
 
     return CYRET_SUCCESS;
 }
@@ -432,4 +438,23 @@ int CyBtldr_CreateSetActiveAppCmd(unsigned char appId, unsigned char* cmdBuf, un
 int CyBtldr_ParseSetActiveAppCmdResult(unsigned char* cmdBuf, unsigned long cmdSize, unsigned char* status)
 {
     return CyBtldr_ParseDefaultCmdResult(cmdBuf, cmdSize, status);
+}
+
+//Try to parse a packet to determine its validity, if valid then return set the status param to the packet's status.
+//Used to generate useful error messages. return 1 on success 0 otherwise.
+int CyBtldr_TryParseParketStatus(unsigned char* packet, int packetSize, unsigned char* status)
+{
+    unsigned short dataSize;
+    if (packet == NULL || packetSize < BASE_CMD_SIZE || packet[0] != CMD_START)
+        return CYBTLDR_STAT_ERR_UNK;
+    *status = packet[1];
+    dataSize = packet[2] | (packet[3] << 8);
+
+    unsigned short readChecksum = packet[dataSize + 4] | (packet[dataSize + 5] << 8);
+    unsigned short computedChecksum = CyBtldr_ComputeChecksum(packet, BASE_CMD_SIZE + dataSize - 3);
+    
+    if (packet[dataSize + BASE_CMD_SIZE - 1] != CMD_STOP || readChecksum != computedChecksum)
+        return CYBTLDR_STAT_ERR_UNK;
+
+    return CYRET_SUCCESS;
 }
