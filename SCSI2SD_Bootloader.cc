@@ -186,9 +186,10 @@ Bootloader::load(const std::string& path, void (*progress)(uint8_t, uint16_t))
 	};
 
 	SCSI2SDHID_handle = myBootloaderHandle;
-
+	
 	int result = CyBtldr_Program(
 		path.c_str(),
+		NULL, // SecurityKey pointer
 		&cyComms,
 		progress);
 
