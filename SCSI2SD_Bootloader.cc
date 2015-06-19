@@ -28,6 +28,7 @@ extern "C"
 #include "cybtldr_api.h"
 #include "cybtldr_api2.h"
 #include "cymetadata.h"
+#include "cyerror.h"
 }
 #include <string.h>
 
@@ -177,7 +178,7 @@ Bootloader::isCorrectFirmware(const std::string& path) const
 			retval = true;
 		}
         } else {
-		std::cout << "Bootloader in device does not support reading current firmware info!" << std::endl << std::endl;
+		std::cout << "Bootloader GetMetadata failed (" << std::string(cyerror_get(err)) << ")" << std::endl << std::endl;
 	}
 
 	return retval;
@@ -223,7 +224,9 @@ Bootloader::load(const std::string& path, void (*progress)(uint8_t, uint16_t))
 
 	if (result)
 	{
-		throw std::runtime_error("Firmware update failed");
+		std::stringstream msg;
+		msg << "(" << std::string(cyerror_get(result)) << ")";
+		throw std::runtime_error(msg.str());
 	}
 }
 
