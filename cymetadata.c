@@ -21,7 +21,7 @@ int CyBtldr_GetMetadata(CyBtldr_CommunicationsData* cyComms, const char* filenam
         unsigned long siliconId = 0;
         unsigned char siliconRev = 0;
         CyBtldr_ChecksumType chksumtype = SUM_CHECKSUM;
-        char line[MAX_BUFFER_SIZE];
+        uint8_t line[MAX_BUFFER_SIZE];
         unsigned int lineLen;
         uint8_t* securityKey = NULL;
         meta->appId = meta->appVer = meta->bootVer = meta->fileAppId = meta->fileAppVer = 0;
@@ -29,14 +29,14 @@ int CyBtldr_GetMetadata(CyBtldr_CommunicationsData* cyComms, const char* filenam
 
         err = CyBtldr_ReadLine(&lineLen, line);
         if (CYRET_SUCCESS == err)
-            err = CyBtldr_ParseHeader(lineLen, (uint8_t*)line, &siliconId, &siliconRev, (uint8_t*)&chksumtype);
+            err = CyBtldr_ParseHeader(lineLen, line, &siliconId, &siliconRev, (uint8_t*)&chksumtype);
 
         if (CYRET_SUCCESS == err) {
             CyBtldr_SetCheckSumType(chksumtype);
             while( CYRET_SUCCESS == (err = CyBtldr_ReadLine(&lineLen, line)) ) {
                 uint8_t dummyArrayId, dummyChecksum;
                 uint16_t dummyRowNum, buffersize = sizeof(line);
-                err = CyBtldr_ParseRowData(lineLen, (uint8_t*)line, &dummyArrayId, &dummyRowNum, (uint8_t*)line, &buffersize, &dummyChecksum);
+                err = CyBtldr_ParseRowData(lineLen, line, &dummyArrayId, &dummyRowNum, line, &buffersize, &dummyChecksum);
                 if(CYRET_SUCCESS == err) {
                     meta->fileAppCustId = (line[195 + BTLDB_APP_CUST_ID_OFFSET] << 24) | (line[194 + BTLDB_APP_CUST_ID_OFFSET] << 16) |
                                     (line[193 + BTLDB_APP_CUST_ID_OFFSET] << 8) | line[192 + BTLDB_APP_CUST_ID_OFFSET];
