@@ -20,13 +20,14 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
-
+#include <iomanip>
 
 extern "C"
 {
 #include "hidapi.h"
 #include "cybtldr_api.h"
 #include "cybtldr_api2.h"
+#include "cymetadata.h"
 }
 #include <string.h>
 
@@ -151,8 +152,35 @@ Bootloader::getHWInfo() const
 bool
 Bootloader::isCorrectFirmware(const std::string& path) const
 {
-	HWInfo info = getHWInfo();
-	return path.rfind(info.firmwareName) != std::string::npos;
+	bool retval = false;
+	CyBtldr_CommunicationsData cyComms =
+	{
+		&SCSI2SDHID_OpenConnection,
+		&SCSI2SDHID_CloseConnection,
+		&SCSI2SDHID_ReadData,
+		&SCSI2SDHID_WriteData,
+		HID_PACKET_SIZE
+	};
+
+	SCSI2SDHID_handle = myBootloaderHandle;
+
+        int err;
+	cymeta_t meta;
+	// Only single app supported for now (id 0)
+	err = CyBtldr_GetMetadata(&cyComms, path.c_str(), 0, &meta);
+
+        if (CYRET_SUCCESS == err) {
+		std::cout << "  Device: AppCustId 0x" << std::setfill('0') << std::setw(8) << std::hex << meta.appCustId << ", AppId 0x" << meta.appId << ", AppVer 0x" << meta.appVer << ", BootVer: 0x" << meta.bootVer << std::endl;
+		std::cout << "  File:   AppCustId 0x" << std::setfill('0') << std::setw(8) << std::hex << meta.fileAppCustId << ", AppId 0x" << meta.fileAppId << ", AppVer 0x" << meta.fileAppVer << std::endl << std::endl;
+		if( meta.appCustId && meta.appCustId == meta.fileAppCustId &&
+			meta.appId && meta.appId == meta.fileAppId ) {
+			retval = true;
+		}
+        } else {
+		std::cout << "Bootloader in device does not support reading current firmware info!" << std::endl << std::endl;
+	}
+
+	return retval;
 }
 
 std::string

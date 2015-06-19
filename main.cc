@@ -62,6 +62,7 @@ int main(int argc, char* argv[])
 	std::cout <<
 		"PSoC 3/5LP USB HID Bootloader Host\n" <<
 		"Copyright (C) 2013 Michael McMaster <michael@codesrc.com>\n" <<
+		"Copyright (C) 2015 Werner Johansson <wj@unifiedengineering.se>\n" <<
 		std::endl;
 
 	int force = 0;
@@ -147,13 +148,14 @@ int main(int argc, char* argv[])
 	std::stringstream foundMsg;
 	foundMsg <<
 		"Device Found\n" <<
-		"  type:\t\t\t" << std::setw(4) << std::hex <<
+		"  type:\t\t\t" << std::setfill('0') << std::setw(4) << std::hex <<
 			Bootloader::VENDOR_ID << " " <<
 			Bootloader::PRODUCT_ID <<
 			"\n" <<
 		"  path:\t\t\t" << bootloader->getDevicePath() << "\n";
 	std::cout << foundMsg.str() << std::endl;
 
+#if 0
 	Bootloader::HWInfo hwInfo(bootloader->getHWInfo());
 	std::cout <<
 		"  Board:\t\t" << hwInfo.desc << "\n" <<
@@ -165,14 +167,15 @@ int main(int argc, char* argv[])
 			"  Existing firmware:\t" <<
 			hid->getFirmwareVersionStr() << std::endl;
 	}
-
+#endif
 
 	if (!bootloader->isCorrectFirmware(filename) && !force)
 	{
 		std::cerr <<
-			"ERROR: Unexpected firmware file. Expected: \""
-				<< hwInfo.firmwareName << "\"\n\n" <<
-			"Using firmware design for a different board will destroy your " <<
+			"ERROR: Unable to verify that firmware Application ID " <<
+			"matches the device.\n" <<
+			"Are you sure the supplied firmware is designed for this device?\n" <<
+			"Using firmware designed for a different device may destroy your " <<
 			"hardware.\n" <<
 			"If you still wish to proceed, try again with the \"-f\" flag.\n" <<
 			std::endl;
