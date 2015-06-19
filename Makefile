@@ -44,7 +44,7 @@ CYAPI = \
 	$(BUILD)/cybtldr_api.o \
 	$(BUILD)/cybtldr_command.o \
 	$(BUILD)/cybtldr_parse.o \
-
+	$(BUILD)/cymetadata.o
 
 HIDAPI = \
 	$(BUILD)/hid.o \
